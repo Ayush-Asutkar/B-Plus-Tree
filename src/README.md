@@ -2,7 +2,9 @@
 
 ## Introduction to B+ Tree
 B+ Tree is an extension of B Tree which allows efficient insertion, 
-deletion and search operations. <br/>
+deletion and search operations. In B Tree, keys and records both can be stored in the internal as well as leaf nodes.
+Whereas, in B+ tree, records (data) can only be stored on the leaf nodes while internal nodes can only store the key values.
+The leaf nodes of a B+ Tree are linked together in the form of a singly linked list to make the search queries more efficient.<br/>
 
 ### Definition of B+ Tree:
 A B+ Tree of order m has these properties:
