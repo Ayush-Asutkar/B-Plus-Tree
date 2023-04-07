@@ -21,14 +21,6 @@ public class LeafNode extends Node {
 
     private DictionaryPair[] dictionary;
 
-    public LeafNode(int order, DictionaryPair dictionaryPair) {
-        this.maxNumPairs = order - 1;
-        this.minNumPairs = (int) (Math.ceil(order / 2.0) - 1);
-        this.dictionary = new DictionaryPair[order];
-        this.numPairs = 0;
-        this.insert(dictionaryPair);
-    }
-
     public int getMaxNumPairs() {
         return maxNumPairs;
     }
@@ -75,6 +67,34 @@ public class LeafNode extends Node {
 
     public void setDictionary(DictionaryPair[] dictionary) {
         this.dictionary = dictionary;
+    }
+
+    public LeafNode(int order, DictionaryPair dictionaryPair) {
+        this.maxNumPairs = order - 1;
+        this.minNumPairs = (int) (Math.ceil(order / 2.0) - 1);
+        this.dictionary = new DictionaryPair[order];
+        this.numPairs = 0;
+        this.insert(dictionaryPair);
+    }
+
+
+    public LeafNode(int order, DictionaryPair[] dictionaryPairs, InternalNode parent) {
+        this.maxNumPairs = order - 1;
+        this.minNumPairs = (int) (Math.ceil(order / 2.0) - 1);
+        this.dictionary = dictionaryPairs;
+        this.numPairs = linearNullSearch(dictionaryPairs);
+        this.parent = parent;
+    }
+
+
+    private int linearNullSearch(DictionaryPair[] pointers) {
+        for(int i=0; i < pointers.length; i++) {
+            if (pointers[i] == null) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private boolean isFull() {

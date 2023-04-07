@@ -1,37 +1,42 @@
-import java.util.ArrayList;
-import java.util.Collections;
-
 public class Main {
     public static void main(String[] args) {
-//        Scanner sc = new Scanner(System.in);
-//
-//        System.out.print("Order of b+ tree = ");
-//        int order = sc.nextInt();
-//
-//        BPlusTree tree = new BPlusTree(order);
-//
-//        tree.insert(5, 33);
-//        tree.insert(15, 21);
-//        tree.insert(25, 31);
-//        tree.insert(35, 41);
-//        tree.insert(45, 10);
+        int order = 3;
+        BPlusTree tree = new BPlusTree(order);
+        tree.insert(21, 0);
+        tree.insert(108, 31);
+        tree.insert(56089, 3);
+        tree.insert(234, 121);
+        tree.insert(4325, -109);
+//        tree.delete (108);
+        System.out.println(tree.search(234));
+        tree.insert(102, 39);
+        tree.insert(65, -3);
+//        tree.delete (102);
+//        tree.delete (21);
+        tree.insert(106, -4);
+        tree.insert(23, 3);
+//        System.out.println(tree.search(23, 99));
+        tree.insert(32, 1);
+        tree.insert(220, 5);
+//        tree.delete (234);
+        System.out.println(tree.search(65));
 
-//        if (tree.search(15) != null) {
-//            System.out.println("Found");
-//        } else {
-//            System.out.println("Not found");
-//        }
-
-
-        ArrayList<DictionaryPair> list = new ArrayList<>();
-        list.add(new DictionaryPair(4, 5));
-        list.add(new DictionaryPair(6, 5));
-        list.add(new DictionaryPair(2, 5));
-        list.add(new DictionaryPair(210, 5));
-        list.add(new DictionaryPair(1, 5));
-        Collections.sort(list);
-        for(DictionaryPair dp: list) {
-            System.out.println(dp.getKey());
+        if (tree.search(220) != null) {
+            System.out.println("Found");
+        } else {
+            System.out.println("Not found");
         }
+
+//        DictionaryPair[] dp = new DictionaryPair[5];
+//        dp[0] = new DictionaryPair(1, 100);
+//        dp[1] = new DictionaryPair(3, 300);
+//        dp[2] = new DictionaryPair(5, 500);
+//        dp[3] = new DictionaryPair(4, 400);
+//        dp[4] = new DictionaryPair(2, 200);
+//        BPlusTree.sortDictionary(dp);
+//
+//        for(DictionaryPair dps: dp) {
+//            System.out.println(dps.getKey() + "->" + dps.getValue());
+//        }
     }
 }
