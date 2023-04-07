@@ -1,9 +1,9 @@
 public class DictionaryPair implements Comparable<DictionaryPair> {
 
     private int key;
-    private int value;
+    private double value;
 
-    public DictionaryPair(int key, int value) {
+    public DictionaryPair(int key, double value) {
         this.key = key;
         this.value = value;
     }
@@ -12,7 +12,7 @@ public class DictionaryPair implements Comparable<DictionaryPair> {
         return key;
     }
 
-    public int getValue() {
+    public double getValue() {
         return value;
     }
 

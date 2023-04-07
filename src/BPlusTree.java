@@ -315,7 +315,7 @@ public class BPlusTree {
                         list.add(integer);
                     }
                 }
-                System.out.print(list);
+                System.out.print(list + " ");
 
                 for(Node pt: pointers) {
                     if(pt != null) {
@@ -330,13 +330,13 @@ public class BPlusTree {
                         list.add(pair.getKey());
                     }
                 }
-                System.out.print(list);
+                System.out.print(list + " ");
             }
         }
         System.out.println("\n");
     }
 
-    public void insert(int key, int value) {
+    public boolean insert(int key, double value) {
         /* Before inserting an element into a B+ tree, following properties must be kept in mind:
          * -- The root has at least two children
          * -- Each node except root can have a maximum of 'order' children and at least 'order'/2 children
@@ -389,7 +389,10 @@ public class BPlusTree {
          *    |5| --> |15| --> |25| --> |35 45|
          *    */
 
-        System.out.println("Inserting (" + key + ", " + value + ") pair...");
+        Double alreadyPresentVal = this.search(key);
+        if(alreadyPresentVal != null) {
+            return false;
+        }
 
         if (isEmpty()) {
             // the tree is empty
@@ -471,9 +474,11 @@ public class BPlusTree {
                 }
             }
         }
+
+        return true;
     }
 
-    public Integer search(int key) {
+    public Double search(int key) {
         /*
          * Find the leaf node that holds the key, and then do a binary search in that leaf node
          */
@@ -503,8 +508,8 @@ public class BPlusTree {
         }
     }
 
-    public ArrayList<Integer> search(int lowerBound, int upperBound) {
-        ArrayList<Integer> result = new ArrayList<>();
+    public ArrayList<Double> search(int lowerBound, int upperBound) {
+        ArrayList<Double> result = new ArrayList<>();
 
         LeafNode currNode = this.firstLeaf;
         while(currNode != null) {
@@ -658,8 +663,6 @@ public class BPlusTree {
          *    |15| --> |20| --> |30|
          */
 
-        System.out.println("Deleting " + key +"...");
-
         int successor = Integer.MAX_VALUE;
         //find successor of key
         LeafNode node = (this.root == null) ? this.firstLeaf: findLeafNode(key);
@@ -694,11 +697,11 @@ public class BPlusTree {
                 }
             }
         }
-
-        System.out.println("successor = " + successor);
+//
+//        System.out.println("successor = " + successor);
 
         if (isEmpty()) {
-            System.err.println("Invalid Delete: The B+ tree is currently empty.");
+            System.out.println("Invalid Delete: The B+ tree is currently empty.");
         } else {
 
 
@@ -707,7 +710,7 @@ public class BPlusTree {
             int dpIndex = binarySearch(leafNode.getDictionary(), leafNode.getNumPairs(), key);
 
             if(dpIndex < 0) {
-                System.err.println("Invalid Delete: Key unable to be found");
+                System.out.println("Invalid Delete: Key unable to be found");
             } else {
                 //successfully delete the dictionary pair
                 leafNode.delete(dpIndex);

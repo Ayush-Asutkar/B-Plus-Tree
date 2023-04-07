@@ -1,76 +1,108 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) {
-        int order = 3;
+
+        System.out.println("\t**Welcome to DATABASE SERVER**\n");
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the order of B+ Tree: ");
+        int order = scanner.nextInt();
+
         BPlusTree tree = new BPlusTree(order);
+
+        boolean flag = true;
+        do {
+            System.out.println("\nPlease provide the queries with respective keys :");
+            printOptions();
+
+            int option = scanner.nextInt();
+            switch (option) {
+                case 1:
+                    insertionMethod(tree, scanner);
+                    break;
+
+                case 2:
+                    searchKeyMethod(tree, scanner);
+                    break;
+
+                case 3:
+                    searchRangeMethod(tree, scanner);
+                    break;
+
+                case 4:
+                    printTreeMethod(tree);
+                    break;
+
+                case 5:
+                    deleteMethod(tree, scanner);
+                    break;
+
+                default:
+                    flag = false;
+                    break;
+            }
+        } while (flag);
+    }
+
+    private static void deleteMethod(BPlusTree tree, Scanner scanner) {
+        System.out.print("Provide the key which is to be deleted: ");
+        int key = scanner.nextInt();
+
+        System.out.println("Deleting " + key);
+        tree.delete(key);
+    }
+
+    private static void printTreeMethod(BPlusTree tree) {
         tree.printLevelOrder();
+    }
 
-        tree.insert(21, 0);
-        tree.printLevelOrder();
+    private static void searchRangeMethod(BPlusTree tree, Scanner scanner) {
+        System.out.print("Provide the lower bound: ");
+        int lowerBound = scanner.nextInt();
 
-        tree.insert(108, 31);
-        tree.printLevelOrder();
+        System.out.print("Provide the upper bound: ");
+        int upperBound = scanner.nextInt();
 
-        tree.insert(56089, 3);
-        tree.printLevelOrder();
+        ArrayList<Double> result = tree.search(lowerBound, upperBound);
+        System.out.println("Result of " + lowerBound + " - " + upperBound + " = " + result);
+    }
 
-        tree.insert(234, 121);
-        tree.printLevelOrder();
+    private static void searchKeyMethod(BPlusTree tree, Scanner scanner) {
+        System.out.print("Enter the key to be searched: ");
+        int key = scanner.nextInt();
+        Double value = tree.search(key);
+        if (value == null) {
+            System.out.println("The value does not exist in the tree");
+        } else {
+            System.out.println("The value is " + value + ", for the key " + key);
+        }
+    }
 
-        tree.insert(4325, -109);
-        tree.printLevelOrder();
+    private static void insertionMethod(BPlusTree tree, Scanner scanner) {
+        System.out.print("Provide the key: ");
+        int key = scanner.nextInt();
 
-        tree.delete(108);
-        tree.printLevelOrder();
+        System.out.print("Provide the value: ");
+        double value = scanner.nextDouble();
 
-        System.out.println(tree.search(234));
+        System.out.println("Inserting (" + key + ", " + value + ") pair...");
+        boolean insertion = tree.insert(key, value);
 
-        tree.insert(102, 39);
-        tree.printLevelOrder();
+        if(insertion) {
+            System.out.println("Insertion successful!");
+        } else {
+            System.out.println("Primary key constraint violated. Entered value already exists.");
+        }
+    }
 
-        tree.insert(65, -3);
-        tree.printLevelOrder();
-
-        tree.delete (102);
-        tree.printLevelOrder();
-
-        tree.delete (21);
-        tree.printLevelOrder();
-
-        tree.insert(106, -4);
-        tree.printLevelOrder();
-
-        tree.insert(23, 3);
-        tree.printLevelOrder();
-
-        System.out.println(tree.search(23, 99));
-
-        tree.insert(32, 1);
-        tree.printLevelOrder();
-
-        tree.insert(220, 5);
-        tree.printLevelOrder();
-
-        tree.delete (234);
-        tree.printLevelOrder();
-
-        System.out.println(tree.search(65));
-
-//        if (tree.search(220) != null) {
-//            System.out.println("Found");
-//        } else {
-//            System.out.println("Not found");
-//        }
-
-//        DictionaryPair[] dp = new DictionaryPair[5];
-//        dp[0] = new DictionaryPair(1, 100);
-//        dp[1] = new DictionaryPair(3, 300);
-//        dp[2] = new DictionaryPair(5, 500);
-//        dp[3] = new DictionaryPair(4, 400);
-//        dp[4] = new DictionaryPair(2, 200);
-//        BPlusTree.sortDictionary(dp);
-//
-//        for(DictionaryPair dps: dp) {
-//            System.out.println(dps.getKey() + "->" + dps.getValue());
-//        }
+    private static void printOptions() {
+        System.out.println("\tPress 1: Insertion" +
+                "\n\tPress 2: Search a key" +
+                "\n\tPress 3: Search on a range" +
+                "\n\tPress 4: Print the tree in lever order traversal" +
+                "\n\tPress 5: Delete key in the tree" +
+                "\n\tPress 6: ABORT!");
     }
 }
