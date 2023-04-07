@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -346,5 +347,27 @@ public class BPlusTree {
         }  else {
             return dictionaryPairs[index].getValue();
         }
+    }
+
+    public ArrayList<Integer> search(int lowerBound, int upperBound) {
+        ArrayList<Integer> result = new ArrayList<>();
+
+        LeafNode currNode = this.firstLeaf;
+        while(currNode != null) {
+            DictionaryPair[] dictionaryPairs = currNode.getDictionary();
+            for(DictionaryPair dp: dictionaryPairs) {
+                if (dp == null) {
+                    break;
+                }
+
+                if ((lowerBound <= dp.getKey())  &&  (dp.getKey() <= upperBound)) {
+                    result.add(dp.getValue());
+                }
+            }
+
+            currNode = currNode.getRightSibling();
+        }
+
+        return result;
     }
 }

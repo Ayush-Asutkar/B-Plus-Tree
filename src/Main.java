@@ -15,7 +15,7 @@ public class Main {
 //        tree.delete (21);
         tree.insert(106, -4);
         tree.insert(23, 3);
-//        System.out.println(tree.search(23, 99));
+        System.out.println(tree.search(23, 99));
         tree.insert(32, 1);
         tree.insert(220, 5);
 //        tree.delete (234);
