@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
 public class BPlusTree {
     int order; // order or fan-out of the b+ tree
     InternalNode root;
@@ -11,7 +15,6 @@ public class BPlusTree {
     private boolean isEmpty() {
         return this.firstLeaf == null;
     }
-
 
     // Start at the root of the B+ tree and traverse down the tree via key comparisons
     private LeafNode findLeafNode(int key) {
@@ -58,6 +61,29 @@ public class BPlusTree {
         }
     }
 
+    //sorting the dictionaryPairs
+    private void sortDictionary(DictionaryPair[] dictionaryPairs) {
+        Arrays.sort(dictionaryPairs);
+    }
+
+    private int getMidPoint() {
+        return (int) (Math.ceil((this.order + 1) / 2.0) - 1);
+    }
+
+    private ArrayList<DictionaryPair> splitDictionary(LeafNode leafNode, int split) {
+        DictionaryPair[] dictionaryPairs = leafNode.getDictionary();
+
+        //initialize two dictionaries that each hold half of the original dictionary values
+        DictionaryPair[] halfDict = new DictionaryPair[this.order];
+
+        // copy half of the values into halfDict
+        for(int i = split; i < dictionaryPairs.length; i++) {
+            halfDict[i - split] = dictionaryPairs[i];
+            leafNode.delete(i);
+        }
+
+        return halfDict;
+    }
 
     public void insert(int key, int value) {
         /* Before inserting an element into a B+ tree, following properties must be kept in mind:
@@ -118,6 +144,7 @@ public class BPlusTree {
             // create a leaf node as first node in b plus tree
             LeafNode leafNode = new LeafNode(this.order, new DictionaryPair(key, value));
 
+            //set as first leaf node
             this.firstLeaf = leafNode;
         } else {
             // find the leaf node to insert into
@@ -128,6 +155,22 @@ public class BPlusTree {
                 leafNode = findLeafNode(key);
             }
 
+            // insert into leaf node fails if node becomes overfull
+            boolean insertCorrectly = leafNode.insert(new DictionaryPair(key, value));
+            if(!insertCorrectly) {
+                // sort all the dictionary pairs with the included pair to be inserted
+                leafNode.getDictionary()[leafNode.getMaxNumPairs()] = new DictionaryPair(key, value);
+                leafNode.increaseNumPair(1);
+
+                //sort dictionary
+                sortDictionary(leafNode.getDictionary());
+
+
+                //split the sorted pairs into two halves
+                int midPoint = getMidPoint();
+                ArrayList<DictionaryPair> halfDict = splitDictionary(leafNode, midPoint);
+                // TODO: 07-04-2023 Complete split dictionary method
+            }
         }
     }
 }

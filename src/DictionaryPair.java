@@ -1,11 +1,19 @@
 public class DictionaryPair implements Comparable<DictionaryPair> {
 
     private int key;
-    private double value;
+    private int value;
 
     public DictionaryPair(int key, int value) {
         this.key = key;
         this.value = value;
+    }
+
+    public int getKey() {
+        return key;
+    }
+
+    public int getValue() {
+        return value;
     }
 
     //helpful for sorting
