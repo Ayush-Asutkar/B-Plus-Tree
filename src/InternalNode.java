@@ -1,8 +1,8 @@
 //only holds keys
 //does not hold dictionary pair
 public class InternalNode extends Node {
-    private int maxDegree;
-    private int minDegree;
+    private final int maxDegree;
+    private final int minDegree;
     private int degree;
 
     private InternalNode leftSibling;

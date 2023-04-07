@@ -7,10 +7,10 @@ import java.util.Arrays;
 // and the LeafNode forms a doubly linked list
 public class LeafNode extends Node {
     // maximum number of dictionary pairs LeafNode can hold
-    private int maxNumPairs;
+    private final int maxNumPairs;
 
     // minimum number of dictionary pairs LeafNode can hold
-    private int minNumPairs;
+    private final int minNumPairs;
 
     // number of dictionary pairs it is holding right now
     private int numPairs;
