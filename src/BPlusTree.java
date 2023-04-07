@@ -68,12 +68,21 @@ public class BPlusTree {
 
         //return node if it is a leafNode object,
         //otherwise repeat the search function a level down
-        Node child = node.getChildPointers(i);
-        if (child instanceof LeafNode) {
-            return (LeafNode) child;
+        Node childNode = node.getChildPointers(i);
+        if (childNode instanceof LeafNode) {
+            return (LeafNode) childNode;
         } else {
-            return findLeafNode((InternalNode) node.getChildPointers(i), key);
+            return findLeafNode((InternalNode) node.getChildPointers()[i], key);
         }
+    }
+
+    private int findIndexOfPointer(Node[] pointers, LeafNode node) {
+        for(int i=0; i < pointers.length; i++) {
+            if(pointers[i] == node) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private int linearNullSearch(Node[] pointers) {
@@ -87,7 +96,20 @@ public class BPlusTree {
 
     //sorting the dictionaryPairs
     private void sortDictionary(DictionaryPair[] dictionaryPairs) {
-        Arrays.sort(dictionaryPairs);
+        Arrays.sort(dictionaryPairs, new Comparator<DictionaryPair>() {
+            @Override
+            public int compare(DictionaryPair o1, DictionaryPair o2) {
+                if ((o1 == null)  &&  (o2 ==  null)) {
+                    return 0;
+                } else if(o1 == null) {
+                    return 1;
+                } else if(o2 == null) {
+                    return -1;
+                } else {
+                    return o1.compareTo(o2);
+                }
+            }
+        });
     }
 
     private DictionaryPair[] splitDictionary(LeafNode leafNode, int split) {
@@ -186,6 +208,89 @@ public class BPlusTree {
         return halfPointers;
     }
 
+    private void shiftDown(Node[] pointers, int amount) {
+        Node[] newPointers = new Node[this.order + 1];
+        for(int i = amount; i < pointers.length; i++) {
+            newPointers[i - amount] = pointers[i];
+        }
+        pointers = newPointers;
+    }
+
+    private void handleDeficiency(InternalNode internalNode) {
+        InternalNode sibling;
+        InternalNode parent = internalNode.parent;
+
+        //remedy deficient root node
+        if(this.root == internalNode) {
+            for(int i=0; i<internalNode.getChildPointers().length; i++) {
+                if(internalNode.getChildPointers()[i] != null) {
+                    if(internalNode.getChildPointers()[i] instanceof InternalNode) {
+                        this.root = (InternalNode) internalNode.getChildPointers()[i];
+                        this.root.parent = null;
+                    } else if(internalNode.getChildPointers()[i] instanceof LeafNode) {
+                        this.root = null;
+                    }
+                }
+            }
+        }
+
+        // borrow
+        else if((internalNode.getLeftSibling() != null)  &&  (internalNode.getLeftSibling().isLendable())) {
+            sibling = internalNode.getLeftSibling();
+        } else if((internalNode.getRightSibling() != null)  &&  (internalNode.getRightSibling().isLendable())) {
+            sibling = internalNode.getRightSibling();
+
+            //copy 1 key and pointer from sibling
+            int borrowedKey = sibling.getKeys()[0];
+            Node pointer = sibling.getChildPointers()[0];
+
+            //copy root key and pointer into parent
+            internalNode.getKeys()[internalNode.getDegree() - 1] = parent.getKeys()[0];
+            internalNode.getChildPointers()[internalNode.getDegree()] = pointer;
+
+            //copy borrowedKey into root
+            parent.getKeys()[0] = borrowedKey;
+
+            //delete key and pointer from sibling
+            sibling.removePointer(0);
+            Arrays.sort(sibling.getKeys());
+            sibling.removePointer(0);
+            shiftDown(internalNode.getChildPointers(), 1);
+        }
+
+        //Merge
+        else if((internalNode.getLeftSibling() != null)  &&  (internalNode.getLeftSibling().isMergeable())) {
+
+        } else if((internalNode.getRightSibling() != null)  &&  (internalNode.getRightSibling().isMergeable())) {
+            sibling = internalNode.getRightSibling();
+
+            //copy rightmost key in parent to beginning of sibling's keys and delete from parent
+            sibling.getKeys()[sibling.getDegree() - 1] = parent.getKeys()[parent.getDegree() - 2];
+            Arrays.sort(sibling.getKeys(), 0, sibling.getDegree());
+            parent.getKeys()[parent.getDegree() - 2] = null;
+
+            //copy internalNode's child pointer over to sibling's list of child pointers
+            for(int i=0; i < internalNode.getChildPointers().length; i++) {
+                if (internalNode.getChildPointers()[i] != null) {
+                    sibling.prependChildPointer(internalNode.getChildPointers(i));
+                    internalNode.getChildPointers(i).parent = sibling;
+                    internalNode.removePointer(i);
+                }
+            }
+
+            //delete child pointer from grandparent to deficient node
+            parent.removePointer(internalNode);
+
+            //remove left sibling
+            sibling.setLeftSibling(internalNode.getLeftSibling());
+        }
+
+        //handle deficiency a level up if it exists
+        if((parent != null)  &&  (parent.isDeficient())) {
+            handleDeficiency(parent);
+        }
+    }
+
     public void printLevelOrder() {
         if(isEmpty()) {
             System.out.println("Tree is empty");
@@ -228,7 +333,7 @@ public class BPlusTree {
                 System.out.print(list);
             }
         }
-        System.out.println();
+        System.out.println("\n");
     }
 
     public void insert(int key, int value) {
@@ -284,6 +389,7 @@ public class BPlusTree {
          *    |5| --> |15| --> |25| --> |35 45|
          *    */
 
+        System.out.println("Inserting (" + key + ", " + value + ") pair...");
 
         if (isEmpty()) {
             // the tree is empty
@@ -551,5 +657,186 @@ public class BPlusTree {
          *        /     |      \
          *    |15| --> |20| --> |30|
          */
+
+        System.out.println("Deleting " + key +"...");
+
+        int successor = Integer.MAX_VALUE;
+        //find successor of key
+        LeafNode node = (this.root == null) ? this.firstLeaf: findLeafNode(key);
+        int ind = binarySearch(node.getDictionary(), node.getNumPairs(), key);
+        if(ind >= 0) {
+            //yes, we will delete it. We are just finding the successor
+            DictionaryPair[] dps = node.getDictionary();
+
+            boolean value = false;
+            for(int i=ind+1; i<dps.length; i++) {
+                if(dps[i] != null) {
+                    value = true;
+                    successor = dps[i].getKey();
+                    break;
+                }
+            }
+            if(!value) {
+                node = node.getRightSibling();
+                while(node != null) {
+                    for(int i=0; i<node.getDictionary().length; i++) {
+                        if(node.getDictionary()[i] != null) {
+                            value = true;
+                            successor = node.getDictionary()[i].getKey();
+                            break;
+                        }
+                    }
+                    if(value) {
+                        break;
+                    }
+
+                    node = node.getRightSibling();
+                }
+            }
+        }
+
+        System.out.println("successor = " + successor);
+
+        if (isEmpty()) {
+            System.err.println("Invalid Delete: The B+ tree is currently empty.");
+        } else {
+
+
+            // get leaf node and attempt to find index of key to delete
+            LeafNode leafNode = (this.root == null) ? this.firstLeaf: findLeafNode(key);
+            int dpIndex = binarySearch(leafNode.getDictionary(), leafNode.getNumPairs(), key);
+
+            if(dpIndex < 0) {
+                System.err.println("Invalid Delete: Key unable to be found");
+            } else {
+                //successfully delete the dictionary pair
+                leafNode.delete(dpIndex);
+
+                //check for deficiencies
+                if(leafNode.isDeficient()) {
+                    LeafNode sibling;
+                    InternalNode parent = leafNode.parent;
+
+                    //Borrow: First check the left sibling and then the right sibling
+                    if((leafNode.getLeftSibling() != null)  &&
+                            (leafNode.getLeftSibling().parent == leafNode.parent)  &&
+                            (leafNode.getLeftSibling().isLendable())) {
+                        sibling = leafNode.getLeftSibling();
+                        DictionaryPair borrowedDP = sibling.getDictionary()[sibling.getNumPairs() - 1];
+
+                        //Insert borrowed dictionary pair
+                        leafNode.insert(borrowedDP);
+
+                        //sort dictionary
+                        sortDictionary(leafNode.getDictionary());
+
+                        //delete dictionary pair from sibling
+                        sibling.delete(sibling.getNumPairs() - 1);
+
+                        //Update key in parent if necessary
+                        int pointerIndex = findIndexOfPointer(parent.getChildPointers(), leafNode);
+                        if(!(borrowedDP.getKey() >= parent.getKeys()[pointerIndex - 1])) {
+                            parent.getKeys()[pointerIndex - 1] = leafNode.getDictionary()[0].getKey();
+                        }
+                    }  else if((leafNode.getRightSibling() != null)  &&
+                                    (leafNode.getRightSibling().parent == leafNode.parent)  &&
+                                    (leafNode.getRightSibling().isLendable())) {
+
+                        sibling = leafNode.getRightSibling();
+                        DictionaryPair borrowedDP = sibling.getDictionary()[0];
+
+                        //Insert borrowed dictionary pair
+                        leafNode.insert(borrowedDP);
+
+                        //delete dictionary pair from sibling
+                        sibling.delete(0);
+
+                        //sort dictionary
+                        sortDictionary(sibling.getDictionary());
+
+                        //Update key in parent if necessary
+                        int pointerIndex = findIndexOfPointer(parent.getChildPointers(), leafNode);
+                        if (!(borrowedDP.getKey() < parent.getKeys()[pointerIndex])) {
+                            parent.getKeys()[pointerIndex] = sibling.getDictionary()[0].getKey();
+                        }
+                    }
+                    // Merge: First check the left sibling, then the right sibling
+                    else if ((leafNode.getLeftSibling() != null)  &&
+                                    (leafNode.getLeftSibling().parent == leafNode.parent)  &&
+                                    (leafNode.getLeftSibling().isMergeable())) {
+
+                        sibling = leafNode.getLeftSibling();
+                        int pointerIndex = findIndexOfPointer(parent.getChildPointers(), leafNode);
+
+                        //remove key and child pointer from parent
+                        parent.removeKey(pointerIndex - 1);
+                        parent.removePointer(leafNode);
+
+                        //update sibling pointer
+                        sibling.setRightSibling(leafNode.getRightSibling());
+
+                        //check for deficiencies in parent
+                        if (parent.isDeficient()) {
+                            handleDeficiency(parent);
+                        }
+                    } else if ((leafNode.getRightSibling() != null)  &&
+                                    (leafNode.getRightSibling().parent == leafNode.parent)  &&
+                                    (leafNode.getRightSibling().isMergeable())) {
+
+                        sibling = leafNode.getRightSibling();
+                        int pointerIndex = findIndexOfPointer(parent.getChildPointers(), leafNode);
+
+                        //remove key and child pointer from parent
+                        parent.removeKey(pointerIndex);
+                        parent.removePointer(pointerIndex);
+
+                        //update sibling pointer
+                        sibling.setLeftSibling(leafNode.getLeftSibling());
+                        if(sibling.getLeftSibling() == null) {
+                            this.firstLeaf = sibling;
+                        }
+
+                        if(parent.isDeficient()){
+                            handleDeficiency(parent);
+                        }
+                    }
+                } else if((this.root == null)  &&  (this.firstLeaf.getNumPairs() == 0)) {
+                    //deleted dictionary pair was the only pair within the tree
+                    //set first leaf as null
+                    this.firstLeaf = null;
+                } else {
+                    sortDictionary(leafNode.getDictionary());
+                }
+            }
+        }
+
+        // check if key is present in the internal nodes
+        if(!isEmpty()) {
+            Queue<Node> q = new LinkedList<>();
+            if(this.root != null) {
+                q.add(this.root);
+            } else {
+                q.add(this.firstLeaf);
+            }
+            while(!q.isEmpty()) {
+                Node tempNode = q.poll();
+                if(tempNode instanceof InternalNode) {
+                    Integer[] keys = ((InternalNode) tempNode).getKeys();
+                    Node[] pointers = ((InternalNode) tempNode).getChildPointers();
+
+                    for(int i=0; i<keys.length; i++) {
+                        if((keys[i] != null) && (key == keys[i])) {
+                            keys[i] = successor;
+                            break;
+                        }
+                    }
+                    for(Node pt: pointers) {
+                        if(pt != null) {
+                            q.add(pt);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

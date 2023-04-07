@@ -44,22 +44,6 @@ public class InternalNode extends Node {
         this.childPointers = pointers;
     }
 
-    public int getMaxDegree() {
-        return maxDegree;
-    }
-
-    public void setMaxDegree(int maxDegree) {
-        this.maxDegree = maxDegree;
-    }
-
-    public int getMinDegree() {
-        return minDegree;
-    }
-
-    public void setMinDegree(int minDegree) {
-        this.minDegree = minDegree;
-    }
-
     public void setDegree(int degree) {
         this.degree = degree;
     }
@@ -79,15 +63,6 @@ public class InternalNode extends Node {
     public void setRightSibling(InternalNode rightSibling) {
         this.rightSibling = rightSibling;
     }
-
-    public void setKeys(Integer[] keys) {
-        this.keys = keys;
-    }
-
-    public void setChildPointers(Node[] childPointers) {
-        this.childPointers = childPointers;
-    }
-
 
     public void appendChildPointer(Node pointer) {
         this.childPointers[this.degree] = pointer;
@@ -122,8 +97,28 @@ public class InternalNode extends Node {
         this.degree++;
     }
 
+    public void prependChildPointer(Node pointer) {
+        for(int i = degree - 1; i >= 0; i--) {
+            childPointers[i + 1] = childPointers[i];
+        }
+        this.childPointers[0] = pointer;
+        this.degree++;
+    }
+
     public boolean isOverFull() {
         return this.degree == this.maxDegree + 1;
+    }
+
+    public boolean isDeficient() {
+        return this.degree < this.minDegree;
+    }
+
+    public boolean isLendable() {
+        return this.degree > this.minDegree;
+    }
+
+    public boolean isMergeable() {
+        return this.degree == this.minDegree;
     }
 
     public void removePointer(int index) {
@@ -138,5 +133,9 @@ public class InternalNode extends Node {
             }
         }
         this.degree--;
+    }
+
+    public void removeKey(int index) {
+        this.keys[index] = null;
     }
 }

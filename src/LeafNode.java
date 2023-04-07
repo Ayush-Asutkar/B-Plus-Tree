@@ -25,10 +25,6 @@ public class LeafNode extends Node {
         return maxNumPairs;
     }
 
-    public int getMinNumPairs() {
-        return minNumPairs;
-    }
-
     public int getNumPairs() {
         return numPairs;
     }
@@ -45,28 +41,12 @@ public class LeafNode extends Node {
         return dictionary;
     }
 
-    public void setMaxNumPairs(int maxNumPairs) {
-        this.maxNumPairs = maxNumPairs;
-    }
-
-    public void setMinNumPairs(int minNumPairs) {
-        this.minNumPairs = minNumPairs;
-    }
-
-    public void setNumPairs(int numPairs) {
-        this.numPairs = numPairs;
-    }
-
     public void setLeftSibling(LeafNode leftSibling) {
         this.leftSibling = leftSibling;
     }
 
     public void setRightSibling(LeafNode rightSibling) {
         this.rightSibling = rightSibling;
-    }
-
-    public void setDictionary(DictionaryPair[] dictionary) {
-        this.dictionary = dictionary;
     }
 
     public LeafNode(int order, DictionaryPair dictionaryPair) {
@@ -77,7 +57,6 @@ public class LeafNode extends Node {
         this.insert(dictionaryPair);
     }
 
-
     public LeafNode(int order, DictionaryPair[] dictionaryPairs, InternalNode parent) {
         this.maxNumPairs = order - 1;
         this.minNumPairs = (int) (Math.ceil(order / 2.0) - 1);
@@ -85,7 +64,6 @@ public class LeafNode extends Node {
         this.numPairs = linearNullSearch(dictionaryPairs);
         this.parent = parent;
     }
-
 
     private int linearNullSearch(DictionaryPair[] pointers) {
         for(int i=0; i < pointers.length; i++) {
@@ -99,6 +77,18 @@ public class LeafNode extends Node {
 
     private boolean isFull() {
         return numPairs == maxNumPairs;
+    }
+
+    public boolean isDeficient() {
+        return this.numPairs < this.minNumPairs;
+    }
+
+    public boolean isLendable() {
+        return this.numPairs > this.minNumPairs;
+    }
+
+    public boolean isMergeable() {
+        return this.numPairs == this.minNumPairs;
     }
 
     public boolean insert(DictionaryPair dictionaryPair) {
