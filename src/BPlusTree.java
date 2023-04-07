@@ -17,9 +17,45 @@ public class BPlusTree {
     private LeafNode findLeafNode(int key) {
         Integer[] keys = this.root.getKeys();
 
-        int index;
+        int i;
 
-        for(int i=0; i < this.root.)
+        // find the next node on path to appropriate leaf node
+        for(i=0; i < this.root.getDegree() - 1; i++) {
+            if (key < keys[i]) {
+                break;
+            }
+        }
+
+        //return node if it is a leafNode object,
+        //otherwise repeat the search function a level down
+        Node child = this.root.getChildPointers(i);
+        if (child instanceof LeafNode) {
+            return (LeafNode) child;
+        } else {
+            return findLeafNode((InternalNode) child, key);
+        }
+    }
+
+    private LeafNode findLeafNode(InternalNode node, int key) {
+        Integer[] keys = this.root.getKeys();
+
+        int i;
+
+        // find the next node on path to appropriate leaf node
+        for(i=0; i < node.getDegree() - 1; i++) {
+            if (key < keys[i]) {
+                break;
+            }
+        }
+
+        //return node if it is a leafNode object,
+        //otherwise repeat the search function a level down
+        Node child = node.getChildPointers(i);
+        if (child instanceof LeafNode) {
+            return (LeafNode) child;
+        } else {
+            return findLeafNode((InternalNode) node.getChildPointers(i), key);
+        }
     }
 
 
@@ -92,7 +128,6 @@ public class BPlusTree {
                 leafNode = findLeafNode(key);
             }
 
-            // TODO: 07-04-2023 Complete find leaf node and get back here
         }
     }
 }

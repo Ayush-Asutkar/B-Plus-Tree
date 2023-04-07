@@ -13,8 +13,18 @@ public class InternalNode extends Node {
     private Node[] childPointers;
 
     public Integer[] getKeys() {
-        return keys;
+        return this.keys;
     }
 
+    public int getDegree() {
+        return this.degree;
+    }
 
+    public Node[] getChildPointers() {
+        return this.childPointers;
+    }
+
+    public Node getChildPointers(int i) {
+        return this.childPointers[i];
+    }
 }
