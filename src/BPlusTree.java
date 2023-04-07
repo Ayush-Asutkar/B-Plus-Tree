@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class BPlusTree {
     private int order; // order or fan-out of the b+ tree
@@ -188,6 +186,51 @@ public class BPlusTree {
         return halfPointers;
     }
 
+    public void printLevelOrder() {
+        if(isEmpty()) {
+            System.out.println("Tree is empty");
+            return;
+        }
+
+        Queue<Node> q = new LinkedList<>();
+        if(this.root != null) {
+            q.add(this.root);
+        } else {
+            q.add(this.firstLeaf);
+        }
+        while(!q.isEmpty()) {
+            Node tempNode = q.poll();
+            if(tempNode instanceof InternalNode) {
+                Integer[] keys = ((InternalNode) tempNode).getKeys();
+                Node[] pointers = ((InternalNode) tempNode).getChildPointers();
+
+                ArrayList<Integer> list = new ArrayList<>();
+                for(Integer integer: keys) {
+                    if(integer != null) {
+                        list.add(integer);
+                    }
+                }
+                System.out.print(list);
+
+                for(Node pt: pointers) {
+                    if(pt != null) {
+                        q.add(pt);
+                    }
+                }
+            } else {
+                DictionaryPair[] dictionaryPairs = ((LeafNode) tempNode).getDictionary();
+                ArrayList<Integer> list = new ArrayList<>();
+                for(DictionaryPair pair: dictionaryPairs) {
+                    if(pair != null) {
+                        list.add(pair.getKey());
+                    }
+                }
+                System.out.print(list);
+            }
+        }
+        System.out.println();
+    }
+
     public void insert(int key, int value) {
         /* Before inserting an element into a B+ tree, following properties must be kept in mind:
          * -- The root has at least two children
@@ -325,6 +368,11 @@ public class BPlusTree {
     }
 
     public Integer search(int key) {
+        /*
+         * Find the leaf node that holds the key, and then do a binary search in that leaf node
+         */
+
+
         if (isEmpty()) {
             return null;
         }
@@ -369,5 +417,139 @@ public class BPlusTree {
         }
 
         return result;
+    }
+
+    public void delete(int key) {
+        /* Before inserting an element into a B+ tree, following properties must be kept in mind:
+         * -- A node can have a maximum of 'order' children
+         * -- A node can contain a maximum of 'order' - 1 keys
+         * -- A node should have a minimum of floor('order'/2) - 1 keys
+         * -- A node (except root node) should contain a minimum of floor('order'/2) - 1 keys*/
+
+        /* While deleting a key, take care of the keys present in the internal nodes as well,
+         * because the values are redundant in a B+ tree.
+         * Search the key to be deleted then follow the following steps:
+         * Case - I :- The key to be deleted is present only at the leaf node not in the indexed
+         * (or internal nodes). There are two cases for it
+         * 1. There is more than the minimum number of keys is the node. Simply delete the key.
+         *                      |25|
+         *                   /        \
+         *                /              \
+         *           |15|                  |35 45|
+         *         /   |                 /    |    \
+         *      /      |               /      |       \
+         *  |5| --> |15 20| --> |25 30| --> |35 40| --> |45 55|
+         *
+         * Deleting 40:
+         *                      |25|
+         *                   /        \
+         *                /              \
+         *           |15|                 |35 45|
+         *         /   |                /    |    \
+         *      /      |              /      |       \
+         *  |5| --> |15 20| --> |25 30| --> |35| --> |45 55|
+         *
+         *
+         * 2. There is an exact minimum number of keys in the node. Delete the key and borrow a key
+         *    from the immediate sibling. Add the median key of the sibling node to the parent.
+         *                      |25|
+         *                   /        \
+         *                /              \
+         *           |15|                 |35 45|
+         *         /   |                /    |    \
+         *      /      |              /      |       \
+         *  |5| --> |15 20| --> |25 30| --> |35| --> |45 55|
+         *
+         * Deleting 5:
+         *                      |25|
+         *                   /        \
+         *                /              \
+         *           |20|                 |35 45|
+         *         /   |                /    |    \
+         *      /      |              /      |       \
+         *    |15| --> |20| --> |25 30| --> |35| --> |45 55|
+         *
+         *
+         * Case - II:- The key to be deleted is present in the internal nodes as well. Then remove them
+         * from the internal nodes as well. Following are the cases for this operation:
+         * 1. If there is more than the minimum number of keys in the node, simply delete the key from
+         *    the leaf node and delete the key from internal node as well. Fill the empty space in the
+         *    internal node with the interior successor.
+         *                      |25|
+         *                   /        \
+         *                /              \
+         *           |20|                 |35 45|
+         *         /   |                /    |    \
+         *      /      |              /      |       \
+         *    |15| --> |20| --> |25 30| --> |35| --> |45 55|
+         *
+         * Deleting 45:
+         *                       |25|
+         *                    /       \
+         *                 /             \
+         *           |20|                 |35 55|
+         *         /   |                /    |    \
+         *      /      |              /      |       \
+         *    |15| --> |20| --> |25 30| --> |35| --> |55|
+         *
+         *
+         * 2. If there is an exact minimum number of keys in the node, then delete the key and borrow
+         *    a key from its immediate sibling (through the parent). Fill the empty space created in the
+         *    index (internal node) with the borrowed key.
+         *                       |25|
+         *                    /       \
+         *                 /             \
+         *           |20|                 |35 55|
+         *         /   |                /    |    \
+         *      /      |              /      |       \
+         *    |15| --> |20| --> |25 30| --> |35| --> |55|
+         *
+         * Deleting 35:
+         *                     |25|
+         *                  /       \
+         *               /             \
+         *           |20|              |30 55|
+         *         /   |             /    |    \
+         *      /      |           /      |       \
+         *    |15| --> |20| --> |25| --> |30| --> |55|
+         *
+         * 3. This case is similar to Case - II (1) but here, empty space is generated above the immediate
+         *    parent node. After deleting the key, merge the empty space with its sibling. Fill the empty
+         *    space in the grandparent node with the inorder successor.
+         *
+         *                     |25|
+         *                  /       \
+         *               /             \
+         *           |20|              |30 55|
+         *         /   |             /    |    \
+         *      /      |           /      |       \
+         *    |15| --> |20| --> |25| --> |30| --> |55|
+         *
+         * Deleting 25:
+         *                 |30|
+         *               /      \
+         *             /          \
+         *         |20|            |55|
+         *       /     \           /   \
+         *      /       \         /     \
+         *    |15| --> |20| --> |30| --> |55|
+         *
+         * Case - III:- In this case, the height of the tree gets shrunk.
+         *
+         *                 |30|
+         *               /      \
+         *             /          \
+         *         |20|            |55|
+         *       /     \           /   \
+         *      /       \         /     \
+         *    |15| --> |20| --> |30| --> |55|
+         *
+         * Deleting 55:
+         *
+         *           |20 30|
+         *          /   |    \
+         *        /     |      \
+         *    |15| --> |20| --> |30|
+         */
     }
 }
